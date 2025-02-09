@@ -149,7 +149,9 @@ export default function Home() {
       
       const type = sourceId === 'repeat' ? 'repeat' as const :
                   sourceId.includes('left') || sourceId.includes('right') ? 'rotation' as const : 
-                  sourceId === 'sound' ? 'sound' as const : 'movement' as const;
+                  sourceId === 'sound' ? 'sound' as const :
+                  sourceId === 'wait' ? 'wait' as const :
+                  'movement' as const;
       
       const newCommand: Command = {
         id: `${type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -536,54 +538,92 @@ export default function Home() {
 >
   <div className="flex flex-col h-full">
     <div className="flex items-center justify-center p-4 border-b">
-    <button
-  className={`flex px-6 py-2 rounded-lg font-medium items-center gap-2 ${
-    commands.length === 0 
-      ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
-      : isExecuting
-      ? 'bg-gray-600 text-white cursor-wait'
-      : 'bg-green-500 text-white hover:bg-green-600'
-  }`}
-  disabled={commands.length === 0 || isExecuting}
-  onClick={async () => {
-    try {
-      setIsExecuting(true);
-      console.log('Starting program execution...');
-      console.log('Current commands:', commands);
-      await executeCommands(commands);
-    } finally {
-      setIsExecuting(false);
-    }
-  }}
->
-  {isExecuting ? (
-    <>
-      <svg 
-        className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" 
-        xmlns="http://www.w3.org/2000/svg" 
-        fill="none" 
-        viewBox="0 0 24 24"
+    <motion.button
+      initial={false}
+      animate={{
+        scale: isExecuting ? 0.95 : 1,
+        backgroundColor: commands.length === 0 
+          ? 'rgb(156 163 175)' // gray-400
+          : isExecuting 
+          ? 'rgb(75 85 99)' // gray-600
+          : 'rgb(34 197 94)', // green-500
+      }}
+      whileHover={
+        commands.length === 0 || isExecuting 
+          ? {} 
+          : { backgroundColor: 'rgb(22 163 74)' } // green-600
+      }
+      className={`
+        flex px-6 py-2 rounded-lg font-medium items-center gap-2 text-white
+        ${commands.length === 0 ? 'cursor-not-allowed' : isExecuting ? 'cursor-wait' : 'cursor-pointer'}
+      `}
+      disabled={commands.length === 0 || isExecuting}
+      onClick={async () => {
+        try {
+          setIsExecuting(true);
+          console.log('Starting program execution...');
+          console.log('Current commands:', commands);
+          await executeCommands(commands);
+        } finally {
+          setIsExecuting(false);
+        }
+      }}
+    >
+      <motion.div
+        animate={{
+          rotate: isExecuting ? 360 : 0,
+        }}
+        transition={{
+          repeat: isExecuting ? Infinity : 0,
+          duration: 1,
+          ease: "linear"
+        }}
       >
-        <circle 
-          className="opacity-25" 
-          cx="12" 
-          cy="12" 
-          r="10" 
-          stroke="currentColor" 
-          strokeWidth="4"
-        />
-        <path 
-          className="opacity-75" 
-          fill="currentColor" 
-          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-        />
-      </svg>
-      Executing...
-    </>
-  ) : (
-    'Start Program'
-  )}
-</button>
+        {isExecuting ? (
+          <svg 
+            className="h-5 w-5 text-white" 
+            xmlns="http://www.w3.org/2000/svg" 
+            fill="none" 
+            viewBox="0 0 24 24"
+          >
+            <circle 
+              className="opacity-25" 
+              cx="12" 
+              cy="12" 
+              r="10" 
+              stroke="currentColor" 
+              strokeWidth="4"
+            />
+            <path 
+              className="opacity-75" 
+              fill="currentColor" 
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
+          </svg>
+        ) : (
+          <svg 
+            className="h-5 w-5" 
+            fill="none" 
+            viewBox="0 0 24 24" 
+            stroke="currentColor"
+          >
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth={2} 
+              d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+            />
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth={2} 
+              d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        )}
+      </motion.div>
+      <span>{isExecuting ? 'Executing...' : 'Start Program'}</span>
+    </motion.button>
     </div>
     <div className="flex-1 p-4 border-2 border-dashed rounded-lg">
       {mainContent}

@@ -208,10 +208,8 @@ export function CommandBlock({
     if (type === "sound") {
       return <SoundCommand sound={sound} onSoundChange={onSoundChange} />;
     }
-
-    if (type === 'wait'){
+    if (type === "wait") {
       return <WaitCommand steps={steps} onStepsChange={onStepsChange} />;
-
     }
     return children;
   };
