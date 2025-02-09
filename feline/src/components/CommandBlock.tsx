@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { RotateCcw, RotateCw } from "lucide-react";
 
-export type CommandType = "movement" | "rotation" | "sound";
+export type CommandType = "movement" | "rotation" | "sound" | 'wait';
 
 interface CommandBlockProps {
   id: string;
@@ -173,6 +173,11 @@ export function CommandBlock({
     }
     if (type === "sound") {
       return <SoundCommand sound={sound} onSoundChange={onSoundChange} />;
+    }
+
+    if (type === 'wait'){
+      return <WaitCommand steps={steps} onStepsChange={onStepsChange} />;
+
     }
     return children;
   };

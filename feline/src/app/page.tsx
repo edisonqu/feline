@@ -9,7 +9,7 @@ import mqtt, { MqttClient } from "mqtt";
 
 interface Command {
   id: string;
-  type: 'movement' | 'rotation' | 'sound' | 'repeat';
+  type: 'movement' | 'rotation' | 'sound' | 'repeat' | 'wait';
   command: string;
   steps?: number;
   sound?: string;
@@ -80,8 +80,11 @@ export default function Home() {
             publishVelocity(0, 0);
             resolve();
           }, command.steps! * 100);
+        break;
+        case 'wait':
+          setTimeout(resolve, command.steps! * 1000);
           break;
-        
+
         case 'sound':
           if (mqttClientRef.current) {
             mqttClientRef.current.publish("`robot/speak`", command.sound || "meow");
@@ -499,6 +502,20 @@ export default function Home() {
             Play Sound
           </CommandBlock>
         </motion.div>
+        <motion.div 
+        drag 
+        dragSnapToOrigin
+        style={{ zIndex: 50 }}
+        onDragEnd={(event) => handleDragEnd(event, 'wait')}
+      >
+        <CommandBlock 
+          id="wait" 
+          type="wait"
+          steps={1}
+        >
+          Wait
+        </CommandBlock>
+      </motion.div>
         <motion.div 
           drag 
           dragSnapToOrigin

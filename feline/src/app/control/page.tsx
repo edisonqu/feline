@@ -59,6 +59,7 @@ export default function Home() {
   };
 
   useEffect(() => {
+    
     const hostname = window.location.hostname;
     const username = hostname.split("-")[0];
     const mqttHost = username.includes(".") ? hostname : `${username}-bracketbot.local`;
