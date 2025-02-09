@@ -1,11 +1,11 @@
 'use client'
 
-import React, { useState, useCallback, useMemo, useRef } from "react";
-import { motion, Reorder, AnimatePresence } from "framer-motion";
+import React, { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { motion, Reorder } from "framer-motion";
 import { CommandBlock } from "@/components/CommandBlock";
-import { FaTrash } from 'react-icons/fa';
 import { RepeatBlock } from "@/components/RepeatBlock";
 import { TrashIcon } from 'lucide-react';
+import mqtt, { MqttClient } from "mqtt";
 
 interface Command {
   id: string;
@@ -23,7 +23,88 @@ export default function Home() {
   const [draggedId, setDraggedId] = useState<string | null>(null);
   const [isOverTrash, setIsOverTrash] = useState(false);
   const hasAddedCommand = React.useRef(false);
+  const [connectionStatus, setConnectionStatus] = useState("Disconnected");
+  const mqttClientRef = useRef<MqttClient | null>(null);
   const currentDragId = useRef<string | null>(null);
+
+  useEffect(() => {
+    const hostname = window.location.hostname;
+    const username = hostname.split("-")[0];
+    const mqttHost = username.includes(".") ? hostname : `${username}-bracketbot.local`;
+  
+    const client = mqtt.connect(`ws://${mqttHost}:9001`);
+    mqttClientRef.current = client;
+  
+    client.on("connect", () => {
+      setConnectionStatus("Connected");
+      client.subscribe('/mapping/traversability_grid');
+      client.subscribe('/mapping/robot_pose_grid_coords');
+    });
+  
+    client.on("error", (error) => {
+      setConnectionStatus(`Connection failed: ${error}`);
+    });
+  
+    return () => {
+      if (client) client.end();
+    };
+  }, []);
+
+  const publishVelocity = (linear: number, angular: number) => {
+    if (!mqttClientRef.current) return;
+    const payload = JSON.stringify({
+      timestamp: Date.now(),
+      linear_velocity_mps: linear,
+      angular_velocity_radps: angular,
+    });
+    mqttClientRef.current.publish("/control/target_velocity", payload);
+  };
+  
+  const executeCommand = async (command: Command) => {
+    return new Promise<void>((resolve) => {
+      switch (command.type) {
+        case 'movement':
+          const isForward = command.command === 'forward';
+          publishVelocity(isForward ? 0.5 : -0.5, 0);
+          setTimeout(() => {
+            publishVelocity(0, 0);
+            resolve();
+          }, command.steps! * 1000); // Each step is 1 second
+          break;
+        
+        case 'rotation':
+          const isLeft = command.command.includes('left');
+          publishVelocity(0, isLeft ? 45.0 : -45.0);
+          setTimeout(() => {
+            publishVelocity(0, 0);
+            resolve();
+          }, command.steps! * 100); // Each step is 100ms
+          break;
+        
+        case 'sound':
+          if (mqttClientRef.current) {
+            mqttClientRef.current.publish("`robot/speak`", command.sound || "meow");
+            setTimeout(resolve, 1000);
+          } else {
+            resolve();
+          }
+          break;
+  
+        case 'repeat':
+          executeCommands(command.children || [], command.steps || 1)
+            .then(resolve);
+          break;
+      }
+    });
+  };
+  
+  const executeCommands = async (commandList: Command[], repeatCount: number = 1) => {
+    for (let i = 0; i < repeatCount; i++) {
+      for (const command of commandList) {
+        await executeCommand(command);
+      }
+    }
+  };
   
   const handleDragEnd = useCallback((event: any, sourceId: string) => {
     const dragEventId = `${Date.now()}-${Math.random()}`;
@@ -166,8 +247,8 @@ export default function Home() {
         values={commandsToRender}
         onReorder={(newOrder) => {
           console.log('Canvas State:', {
-            allCommands: newOrder,
             repeatBlocks: newOrder.filter(cmd => cmd.type === 'repeat'),
+            allCommands: newOrder,
             totalCommands: newOrder.length,
             breakdown: {
               repeat: newOrder.filter(cmd => cmd.type === 'repeat').length,
@@ -294,7 +375,7 @@ export default function Home() {
   };
 
   const addCommandToRepeatBlock = (commands: Command[], repeatBlockId: string, commandToAdd: Command): boolean => {
-    for (let cmd of commands) {
+    for (const cmd of commands) {
       if (cmd.id === repeatBlockId) {
         if (!cmd.children) cmd.children = [];
         
@@ -425,13 +506,32 @@ export default function Home() {
       </aside>
 
       <main 
-        ref={mainRef} 
-        className="flex-1 relative overflow-hidden"
+  ref={mainRef} 
+  className="flex-1 relative overflow-hidden"
+>
+  <div className="flex flex-col h-full">
+    <div className="flex items-center justify-center p-4 border-b">
+      <button
+        className={`flex px-6 py-2 rounded-lg font-medium items-center ${
+          commands.length === 0 
+            ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+            : 'bg-green-500 text-white hover:bg-green-600'
+        }`}
+        disabled={commands.length === 0}
+        onClick={async () => {
+          console.log('Starting program execution...');
+          console.log('Current commands:', commands);
+          await executeCommands(commands);
+        }}
       >
-        <div className="min-h-screen p-4 border-2 border-dashed rounded-lg w-full">
-          {mainContent}
-        </div>
-      </main>
+        Start Program
+      </button>
+    </div>
+    <div className="flex-1 p-4 border-2 border-dashed rounded-lg">
+      {mainContent}
+    </div>
+  </div>
+</main>
 
       {/* Trash Can */}
       <motion.div
