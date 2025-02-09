@@ -140,16 +140,15 @@ export default function Home() {
 
     // Single state update
     setCommands(prev => {
-      // If we've already added the command, return previous state
       if (hasAddedCommand.current) {
         return prev;
       }
       
-      const type = sourceId === 'repeat' ? 'repeat' :
-                  sourceId.includes('left') || sourceId.includes('right') ? 'rotation' : 
-                  sourceId === 'sound' ? 'sound' : 'movement';
+      const type = sourceId === 'repeat' ? 'repeat' as const :
+                  sourceId.includes('left') || sourceId.includes('right') ? 'rotation' as const : 
+                  sourceId === 'sound' ? 'sound' as const : 'movement' as const;
       
-      const newCommand = {
+      const newCommand: Command = {
         id: `${type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         type,
         command: sourceId,
@@ -202,7 +201,7 @@ export default function Home() {
     setIsDragging(true);
   }, []);
 
-  const handleCanvasItemDragEnd = useCallback((event: any) => {
+  const handleCanvasItemDragEnd = useCallback(() => {
     setIsDragging(false);
   }, []);
 
@@ -302,7 +301,7 @@ export default function Home() {
             }}
             onDragEnd={(event) => {
               event.stopPropagation();
-              handleCanvasItemDragEnd(event);
+              handleCanvasItemDragEnd();
             }}
           >
             <motion.div
@@ -353,7 +352,7 @@ export default function Home() {
         ))}
       </Reorder.Group>
     );
-  }, [handleStepsChange, handleSoundChange]);
+  }, [handleCanvasItemDragStart, handleCanvasItemDragEnd, handleStepsChange, handleSoundChange]);
 
   // Memoize main render
   const mainContent = useMemo(() => {
