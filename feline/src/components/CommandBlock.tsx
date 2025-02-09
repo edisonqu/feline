@@ -31,6 +31,8 @@ const getBackgroundColor = (type: CommandType) => {
       return "bg-pink-200 before:bg-pink-200 after:bg-pink-200";
     case "sound":
       return "bg-purple-100 before:bg-purple-100 after:bg-purple-100";
+    case "wait":
+      return "bg-red-200 before:bg-red-200 after:bg-red-200";
     default:
       return "bg-gray-100 before:bg-gray-100 after:bg-gray-100";
   }
@@ -131,6 +133,38 @@ const SoundCommand = ({
         <SelectItem value="rockLMFAO">ijustwannarock</SelectItem>
       </SelectContent>
     </Select>
+  </div>
+);
+
+const WaitCommand = ({
+  steps,
+  onStepsChange,
+}: {
+  steps: number;
+  onStepsChange: (steps: number) => void;
+}) => (
+  <div className="flex items-center gap-2">
+    <span className="text-sm font-semibold">Wait</span>
+    <Input
+      type="number"
+      value={steps === 0 ? "" : steps}
+      onChange={(e) => {
+        const value = e.target.value;
+        if (value === "") {
+          onStepsChange(0);
+          return;
+        }
+        const num = parseInt(value);
+        if (!isNaN(num)) {
+          onStepsChange(Math.max(1, num));
+        }
+      }}
+      className="w-16 h-8 text-center bg-white/50 border-none focus:ring-2 focus:ring-red-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+      min={1}
+      max={60}
+      placeholder=""
+    />
+    <span className="text-sm font-semibold">seconds</span>
   </div>
 );
 
