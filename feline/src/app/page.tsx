@@ -480,92 +480,107 @@ export default function Home() {
   return (
     <div className="flex h-screen relative">
       <aside className="w-72 border-r bg-gray-50 p-4 space-y-8">
-        {/* Sidebar items that can be dragged */}
         <div>
-          <h1 className="mt-4 font-medium"> Drag and drop from below!</h1>
+          <h1 className="my-6 font-medium">Drag and drop from below!</h1>
         </div>
-        <motion.div
-          drag
-          dragSnapToOrigin
-          style={{ zIndex: 50 }}
-          onDragEnd={(event) => {
-            event.stopPropagation();
-            handleDragEnd(event, "forward");
-          }}
-          dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
-        >
-          <CommandBlock
-            id="forward"
-            type="movement"
-            command="forward"
-            steps={1}
+
+        {/* Movement Commands */}
+        <div>
+          <h2 className="text-sm font-medium text-gray-600 mb-6">Movement</h2>
+          <div className="space-y-6">
+            <motion.div
+              drag
+              dragSnapToOrigin
+              style={{ zIndex: 50 }}
+              onDragEnd={(event) => {
+                event.stopPropagation();
+                handleDragEnd(event, "forward");
+              }}
+              dragTransition={{ bounceStiffness: 600, bounceDamping: 20 }}
+            >
+              <CommandBlock id="forward" type="movement" command="forward" steps={1}>
+                Forward
+              </CommandBlock>
+            </motion.div>
+            <motion.div
+              drag
+              dragSnapToOrigin
+              style={{ zIndex: 50 }}
+              onDragEnd={(event) => handleDragEnd(event, "backward")}
+            >
+              <CommandBlock id="backward" type="movement" command="backward" steps={1}>
+                Move Backward
+              </CommandBlock>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Rotation Commands */}
+        <div>
+          <h2 className="text-sm font-medium text-gray-600 mb-6">Rotation</h2>
+          <div className="space-y-4">
+            <motion.div
+              drag
+              dragSnapToOrigin
+              style={{ zIndex: 50 }}
+              onDragEnd={(event) => handleDragEnd(event, "left")}
+            >
+              <CommandBlock id="left" type="rotation" command="left" steps={15}>
+                Turn Left
+              </CommandBlock>
+            </motion.div>
+            <motion.div
+              drag
+              dragSnapToOrigin
+              style={{ zIndex: 50 }}
+              onDragEnd={(event) => handleDragEnd(event, "right")}
+            >
+              <CommandBlock id="right" type="rotation" command="right" steps={15}>
+                Turn Right
+              </CommandBlock>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div>
+          <h2 className="text-sm font-medium text-gray-600 mb-6">Actions</h2>
+          <div className="space-y-4">
+            <motion.div
+              drag
+              dragSnapToOrigin
+              style={{ zIndex: 50 }}
+              onDragEnd={(event) => handleDragEnd(event, "sound")}
+            >
+              <CommandBlock id="sound" type="sound" sound="meow">
+                Play Sound
+              </CommandBlock>
+            </motion.div>
+            <motion.div
+              drag
+              dragSnapToOrigin
+              style={{ zIndex: 50 }}
+              onDragEnd={(event) => handleDragEnd(event, "wait")}
+            >
+              <CommandBlock id="wait" type="wait" steps={1}>
+                Wait
+              </CommandBlock>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Control */}
+        <div>
+          <h2 className="text-sm font-medium text-gray-600 mb-6">Control</h2>
+          <motion.div
+            drag
+            dragSnapToOrigin
+            style={{ zIndex: 50 }}
+            onDragEnd={(event) => handleDragEnd(event, "repeat")}
           >
-            Forward
-          </CommandBlock>
-        </motion.div>
-        <motion.div
-          drag
-          dragSnapToOrigin
-          style={{ zIndex: 50 }}
-          onDragEnd={(event) => handleDragEnd(event, "backward")}
-        >
-          <CommandBlock
-            id="backward"
-            type="movement"
-            command="backward"
-            steps={1}
-          >
-            Move Backward
-          </CommandBlock>
-        </motion.div>
-        <motion.div
-          drag
-          dragSnapToOrigin
-          style={{ zIndex: 50 }}
-          onDragEnd={(event) => handleDragEnd(event, "left")}
-        >
-          <CommandBlock id="left" type="rotation" command="left" steps={15}>
-            Turn Left
-          </CommandBlock>
-        </motion.div>
-        <motion.div
-          drag
-          dragSnapToOrigin
-          style={{ zIndex: 50 }}
-          onDragEnd={(event) => handleDragEnd(event, "right")}
-        >
-          <CommandBlock id="right" type="rotation" command="right" steps={15}>
-            Turn Right
-          </CommandBlock>
-        </motion.div>
-        <motion.div
-          drag
-          dragSnapToOrigin
-          style={{ zIndex: 50 }}
-          onDragEnd={(event) => handleDragEnd(event, "sound")}
-        >
-          <CommandBlock id="sound" type="sound" sound="meow">
-            Play Sound
-          </CommandBlock>
-        </motion.div>
-        <motion.div
-          drag
-          dragSnapToOrigin
-          style={{ zIndex: 50 }}
-          onDragEnd={(event) => handleDragEnd(event, "wait")}
-        >
-          <CommandBlock id="wait" type="wait" steps={1}>
-            Wait
-          </CommandBlock>
-        </motion.div>
-        <motion.div
-          drag
-          dragSnapToOrigin
-          style={{ zIndex: 50 }}
-          onDragEnd={(event) => handleDragEnd(event, "repeat")}
-        >
-          <RepeatBlock id="repeat" steps={2} onStepsChange={() => {}} />
-        </motion.div>
+            <RepeatBlock id="repeat" steps={2} onStepsChange={() => {}} />
+          </motion.div>
+        </div>
       </aside>
 
       <main ref={mainRef} className="flex-1 relative overflow-hidden">
