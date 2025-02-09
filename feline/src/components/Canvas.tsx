@@ -47,8 +47,8 @@ export function Droppable({ children }: DroppableProps) {
     <div 
       ref={setNodeRef} 
       className={`
-        min-h-[200px] transition-colors
-        ${isOver ? 'bg-blue-50' : 'bg-gray-50'}
+        relative w-full h-full transition-colors duration-200
+        ${isOver ? 'bg-blue-50' : ''}
       `}
     >
       {children}
