@@ -535,16 +535,31 @@ export default function Home() {
   className="flex-1 relative overflow-hidden"
 >
   <div className="flex flex-col h-full">
-    <div className="flex items-center justify-center p-4 border-b">
+    <div className="flex items-center justify-center p-4 border-b gap-4">
+    <div 
+      className={`w-3 h-3 rounded-full ${
+        connectionStatus === "Connected" 
+          ? 'bg-green-500' 
+          : 'bg-red-500'
+      }`}
+    />
+    <span className={`text-sm ${
+      connectionStatus === "Connected" 
+        ? 'text-green-600' 
+        : 'text-red-600'
+    }`}>
+      {connectionStatus}
+    </span>
+
     <button
   className={`flex px-6 py-2 rounded-lg font-medium items-center gap-2 ${
-    commands.length === 0 
+    commands.length === 0 || connectionStatus === "Disconnected"
       ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
       : isExecuting
       ? 'bg-gray-600 text-white cursor-wait'
       : 'bg-green-500 text-white hover:bg-green-600'
   }`}
-  disabled={commands.length === 0 || isExecuting}
+  disabled={commands.length === 0 || isExecuting || connectionStatus === "Disconnected" }
   onClick={async () => {
     try {
       setIsExecuting(true);
