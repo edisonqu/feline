@@ -537,12 +537,27 @@ export default function Home() {
   className="flex-1 relative overflow-hidden"
 >
   <div className="flex flex-col h-full">
-    <div className="flex items-center justify-center p-4 border-b">
+    <div className="flex items-center justify-center p-4 border-b gap-4">
+    <div 
+      className={`w-3 h-3 rounded-full ${
+        connectionStatus === "Connected" 
+          ? 'bg-green-500' 
+          : 'bg-red-500'
+      }`}
+    />
+    <span className={`text-sm ${
+      connectionStatus === "Connected" 
+        ? 'text-green-600' 
+        : 'text-red-600'
+    }`}>
+      {connectionStatus}
+    </span>
+
     <motion.button
       initial={false}
       animate={{
         scale: isExecuting ? 0.95 : 1,
-        backgroundColor: commands.length === 0 
+        backgroundColor: commands.length === 0 || connectionStatus === "Disconnected"
           ? 'rgb(156 163 175)' // gray-400
           : isExecuting 
           ? 'rgb(75 85 99)' // gray-600
@@ -557,7 +572,7 @@ export default function Home() {
         flex px-6 py-2 rounded-lg font-medium items-center gap-2 text-white
         ${commands.length === 0 ? 'cursor-not-allowed' : isExecuting ? 'cursor-wait' : 'cursor-pointer'}
       `}
-      disabled={commands.length === 0 || isExecuting}
+      disabled={commands.length === 0 || isExecuting || connectionStatus === "Disconnected" }
       onClick={async () => {
         try {
           setIsExecuting(true);
