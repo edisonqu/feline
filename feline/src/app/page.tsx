@@ -564,7 +564,7 @@ export default function Home() {
           : 'rgb(34 197 94)', // green-500
       }}
       whileHover={
-        commands.length === 0 || isExecuting 
+        commands.length === 0 || isExecuting ||connectionStatus === "Disconnected"
           ? {} 
           : { backgroundColor: 'rgb(22 163 74)' } // green-600
       }
