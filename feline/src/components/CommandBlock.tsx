@@ -1,8 +1,15 @@
-import React from 'react';
+import React from "react";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { RotateCcw, RotateCw } from "lucide-react";
 
-export type CommandType = 'movement' | 'rotation' | 'sound';
+export type CommandType = "movement" | "rotation" | "sound";
 
 interface CommandBlockProps {
   id: string;
@@ -12,31 +19,42 @@ interface CommandBlockProps {
   onDragEnd?: () => void;
   steps?: number;
   onStepsChange?: (steps: number) => void;
+  command?: string;
   [key: string]: any;
 }
 
 const getBackgroundColor = (type: CommandType) => {
   switch (type) {
-    case 'movement':
-      return 'bg-amber-100';
-    case 'rotation':
-      return 'bg-pink-200';
-    case 'sound':
-      return 'bg-purple-100';
+    case "movement":
+      return "bg-amber-100 before:bg-amber-100 after:bg-amber-100";
+    case "rotation":
+      return "bg-pink-200 before:bg-pink-200 after:bg-pink-200";
+    case "sound":
+      return "bg-purple-100 before:bg-purple-100 after:bg-purple-100";
     default:
-      return 'bg-gray-100';
+      return "bg-gray-100 before:bg-gray-100 after:bg-gray-100";
   }
 };
 
-const MoveCommand = ({ direction, steps, onStepsChange }: { direction: 'forward' | 'backward', steps: number, onStepsChange: (steps: number) => void }) => (
+const MoveCommand = ({
+  direction,
+  steps,
+  onStepsChange,
+}: {
+  direction: "forward" | "backward";
+  steps: number;
+  onStepsChange: (steps: number) => void;
+}) => (
   <div className="flex items-center gap-2">
-    <span className="text-sm font-semibold">Move {direction === 'forward' ? 'Front' : 'Back'}</span>
+    <span className="text-sm font-semibold">
+      Move {direction === "forward" ? "Front" : "Back"}
+    </span>
     <Input
       type="number"
-      value={steps === 0 ? '' : steps}
+      value={steps === 0 ? "" : steps}
       onChange={(e) => {
         const value = e.target.value;
-        if (value === '') {
+        if (value === "") {
           onStepsChange(0);
           return;
         }
@@ -54,15 +72,28 @@ const MoveCommand = ({ direction, steps, onStepsChange }: { direction: 'forward'
   </div>
 );
 
-const TurnCommand = ({ direction, steps, onStepsChange }: { direction: 'left' | 'right', steps: number, onStepsChange: (steps: number) => void }) => (
+const TurnCommand = ({
+  direction,
+  steps,
+  onStepsChange,
+}: {
+  direction: "left" | "right";
+  steps: number;
+  onStepsChange: (steps: number) => void;
+}) => (
   <div className="flex items-center gap-2">
     <span className="text-sm font-semibold">Rotate</span>
+    {direction === "left" ? (
+      <RotateCcw className="w-4 h-4" />
+    ) : (
+      <RotateCw className="w-4 h-4" />
+    )}
     <Input
       type="number"
-      value={steps === 0 ? '' : steps}
+      value={steps === 0 ? "" : steps}
       onChange={(e) => {
         const value = e.target.value;
-        if (value === '') {
+        if (value === "") {
           onStepsChange(0);
           return;
         }
@@ -80,7 +111,13 @@ const TurnCommand = ({ direction, steps, onStepsChange }: { direction: 'left' | 
   </div>
 );
 
-const SoundCommand = ({ sound, onSoundChange }: { sound: string, onSoundChange: (sound: string) => void }) => (
+const SoundCommand = ({
+  sound,
+  onSoundChange,
+}: {
+  sound: string;
+  onSoundChange: (sound: string) => void;
+}) => (
   <div className="flex items-center gap-2">
     <span className="text-sm font-semibold">Play</span>
     <Select value={sound} onValueChange={onSoundChange}>
@@ -89,36 +126,52 @@ const SoundCommand = ({ sound, onSoundChange }: { sound: string, onSoundChange: 
       </SelectTrigger>
       <SelectContent>
         <SelectItem value="meow">Meow</SelectItem>
-        <SelectItem value="purr">Purr</SelectItem>
-        <SelectItem value="hiss">Hiss</SelectItem>
+        <SelectItem value="bruh">Bruh</SelectItem>
+        <SelectItem value="anotherone">AnotherOne</SelectItem>
+        <SelectItem value="rockLMFAO">ijustwannarock</SelectItem>
       </SelectContent>
     </Select>
   </div>
 );
 
-export function CommandBlock({ 
-  id, 
-  type, 
-  children, 
-  inCanvas = false, 
+export function CommandBlock({
+  id,
+  type,
+  children,
+  inCanvas = false,
   onDragEnd,
   steps = 1,
   onStepsChange = () => {},
-  sound = 'meow',
+  sound = "meow",
   onSoundChange = () => {},
-  ...props 
-}: CommandBlockProps & { sound?: string; onSoundChange?: (sound: string) => void }) {
-
+  command,
+  ...props
+}: CommandBlockProps & {
+  sound?: string;
+  onSoundChange?: (sound: string) => void;
+}) {
   const renderContent = () => {
-    if (type === 'movement') {
-      const direction = (children as string)?.toLowerCase().includes('backward') ? 'backward' : 'forward';
-      return <MoveCommand direction={direction} steps={steps} onStepsChange={onStepsChange} />;
+    if (type === "movement") {
+      const direction = command?.includes("backward") ? "backward" : "forward";
+      return (
+        <MoveCommand
+          direction={direction}
+          steps={steps}
+          onStepsChange={onStepsChange}
+        />
+      );
     }
-    if (type === 'rotation') {
-      const direction = (children as string)?.toLowerCase().includes('left') ? 'left' : 'right';
-      return <TurnCommand direction={direction} steps={steps} onStepsChange={onStepsChange} />;
+    if (type === "rotation") {
+      const direction = command?.includes("left") ? "left" : "right";
+      return (
+        <TurnCommand
+          direction={direction}
+          steps={steps}
+          onStepsChange={onStepsChange}
+        />
+      );
     }
-    if (type === 'sound') {
+    if (type === "sound") {
       return <SoundCommand sound={sound} onSoundChange={onSoundChange} />;
     }
     return children;
@@ -128,18 +181,31 @@ export function CommandBlock({
     <div
       {...props}
       className={`
-        relative p-3 mb-2
+        relative p-3
         ${getBackgroundColor(type)}
+        border-2 border-black/10 
         rounded-lg
         shadow-sm
         transition-all
         hover:shadow-xl hover:shadow-black/5
-        ${inCanvas ? 'hover:scale-[1.01]' : ''}
+        ${inCanvas ? "hover:scale-[1.01]" : ""}
+        
+        /* Top puzzle piece connector */
+        before:content-['']
+        before:absolute
+        before:w-8
+        before:h-4
+        before:left-8
+        before:top-0
+        before:translate-y-[-85%]
+        before:rounded-t-lg
+        before:border-t-2
+        before:border-l-2
+        before:border-r-2
+        before:border-black/10
       `}
     >
-      <div className="flex items-center">
-        {renderContent()}
-      </div>
+      <div className="flex items-center">{renderContent()}</div>
     </div>
   );
-} 
+}

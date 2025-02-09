@@ -287,7 +287,7 @@ export default function Home() {
             return newOrder;
           });
         }}
-        className="space-y-2"
+        className=""
       >
         {commandsToRender.map((command) => (
           <Reorder.Item
@@ -337,6 +337,7 @@ export default function Home() {
                   inCanvas={true}
                   steps={command.steps}
                   sound={command.sound}
+                  command={command.command}
                   onStepsChange={(steps) => handleStepsChange(command.id, steps)}
                   onSoundChange={(sound) => handleSoundChange(command.id, sound)}
                 >
@@ -416,8 +417,11 @@ export default function Home() {
 
   return (
     <div className="flex h-screen relative">
-      <aside className="w-72 border-r bg-gray-50 p-4">
+      <aside className="w-72 border-r bg-gray-50 p-4 space-y-8">
         {/* Sidebar items that can be dragged */}
+        <div>
+          <h1 className="mt-4 font-medium"> Drag and drop from below!</h1>
+        </div>
         <motion.div 
           drag 
           dragSnapToOrigin
@@ -431,6 +435,7 @@ export default function Home() {
           <CommandBlock 
             id="forward" 
             type="movement"
+            command="forward"
             steps={1}
           >
             Forward
@@ -445,6 +450,7 @@ export default function Home() {
           <CommandBlock 
             id="backward" 
             type="movement"
+            command="backward"
             steps={1}
           >
             Move Backward
@@ -459,6 +465,7 @@ export default function Home() {
           <CommandBlock 
             id="left" 
             type="rotation"
+            command="left"
             steps={15}
           >
             Turn Left
@@ -473,6 +480,7 @@ export default function Home() {
           <CommandBlock 
             id="right" 
             type="rotation"
+            command="right"
             steps={15}
           >
             Turn Right
