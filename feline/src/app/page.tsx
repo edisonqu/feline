@@ -73,12 +73,19 @@ export default function Home() {
     return new Promise<void>((resolve) => {
       switch (command.type) {
         case "movement":
-          const isForward = command.command === "forward";
-          publishVelocity(isForward ? 0.5 : -0.5, 0);
-          setTimeout(() => {
-            publishVelocity(0, 0);
-            resolve();
-          }, command.steps! * 1000);
+          if (command.command === "forward") {
+            publishVelocity(0.5, 0);
+            setTimeout(() => {
+              publishVelocity(0, 0);
+              resolve();
+            }, command.steps! * 1000);
+          } else if (command.command === "backward") {
+            publishVelocity(-0.35, 0);
+            setTimeout(() => {
+              publishVelocity(0, 0);
+              resolve();
+            }, command.steps! * 1000);
+          }
           break;
 
         case "rotation":
