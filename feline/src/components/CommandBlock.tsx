@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 import { RotateCcw, RotateCw } from "lucide-react";
 
-export type CommandType = "movement" | "rotation" | "sound" | 'wait';
+export type CommandType = "movement" | "rotation" | "sound" | 'wait' | "if";
 
 interface CommandBlockProps {
   id: string;
@@ -20,6 +20,8 @@ interface CommandBlockProps {
   steps?: number;
   onStepsChange?: (steps: number) => void;
   command?: string;
+  condition?: string;
+  onConditionChange?: (condition: string) => void;
   [key: string]: any;
 }
 
@@ -33,6 +35,8 @@ const getBackgroundColor = (type: CommandType) => {
       return "bg-purple-100 before:bg-purple-100 after:bg-purple-100";
     case "wait":
       return "bg-red-200 before:bg-red-200 after:bg-red-200";
+    case "if":
+      return "bg-orange-100 before:bg-orange-100 after:bg-orange-100";
     default:
       return "bg-gray-100 before:bg-gray-100 after:bg-gray-100";
   }
@@ -168,6 +172,29 @@ const WaitCommand = ({
   </div>
 );
 
+const IfCommand = ({
+  condition,
+  onConditionChange,
+}: {
+  condition: string;
+  onConditionChange: (condition: string) => void;
+}) => (
+  <div className="flex items-center gap-2">
+    <span className="text-sm font-semibold">If</span>
+    <Select value={condition} onValueChange={onConditionChange}>
+      <SelectTrigger className="w-[140px] bg-white/50 border-none focus:ring-2 focus:ring-orange-200">
+        <SelectValue placeholder="Select condition" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="path_stopped">Path Stopped</SelectItem>
+        <SelectItem value="path_clear">Path Clear</SelectItem>
+        <SelectItem value="obstacle_detected">Obstacle Detected</SelectItem>
+        <SelectItem value="battery_low">Battery Low</SelectItem>
+      </SelectContent>
+    </Select>
+  </div>
+);
+
 export function CommandBlock({
   id,
   type,
@@ -179,6 +206,8 @@ export function CommandBlock({
   sound = "meow",
   onSoundChange = () => {},
   command,
+  condition,
+  onConditionChange,
   ...props
 }: CommandBlockProps & {
   sound?: string;
@@ -210,6 +239,14 @@ export function CommandBlock({
     }
     if (type === "wait") {
       return <WaitCommand steps={steps} onStepsChange={onStepsChange} />;
+    }
+    if (type === "if") {
+      return (
+        <IfCommand
+          condition={condition || "path_stopped"}
+          onConditionChange={onConditionChange || (() => {})}
+        />
+      );
     }
     return children;
   };

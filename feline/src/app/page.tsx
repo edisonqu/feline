@@ -15,11 +15,12 @@ import mqtt, { MqttClient } from "mqtt";
 
 interface Command {
   id: string;
-  type: "movement" | "rotation" | "sound" | "repeat" | "wait";
+  type: "movement" | "rotation" | "sound" | "repeat" | "wait" | "if";
   command: string;
   steps?: number;
   sound?: string;
   children?: Command[];
+  condition?: string;
 }
 
 export default function Home() {
@@ -117,6 +118,14 @@ export default function Home() {
             resolve
           );
           break;
+
+        case "if":
+          if (command.children) {
+            executeCommands(command.children).then(resolve);
+          } else {
+            resolve();
+          }
+          break;
       }
     });
   };
@@ -179,6 +188,8 @@ export default function Home() {
           ? ("sound" as const)
           : sourceId === "wait"
           ? ("wait" as const)
+          : sourceId === "if"
+          ? ("if" as const)
           : ("movement" as const);
 
       const newCommand: Command = {
@@ -186,7 +197,8 @@ export default function Home() {
         type,
         command: sourceId,
         steps: type === "rotation" ? 15 : type === "repeat" ? 2 : 1,
-        children: type === "repeat" ? [] : undefined,
+        children: (type === "repeat" || type === "if") ? [] : undefined,
+        condition: type === "if" ? "path_stopped" : undefined,
       };
 
       if (targetRepeatBlock) {
@@ -358,22 +370,46 @@ export default function Home() {
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.2 }}
               >
-                {command.type === "repeat" ? (
-                  <div className="repeat-block" data-id={command.id}>
-                    <RepeatBlock
-                      id={command.id}
-                      steps={command.steps || 2}
-                      onStepsChange={(steps) =>
-                        handleStepsChange(command.id, steps)
-                      }
-                      inCanvas={true}
-                    >
-                      {command.children && command.children.length > 0 && (
-                        <div className="nested-commands">
-                          {renderCommands(command.children)}
-                        </div>
-                      )}
-                    </RepeatBlock>
+                {command.type === "repeat" || command.type === "if" ? (
+                  <div className={`${command.type}-block`} data-id={command.id}>
+                    {command.type === "repeat" ? (
+                      <RepeatBlock
+                        id={command.id}
+                        steps={command.steps || 2}
+                        onStepsChange={(steps) => handleStepsChange(command.id, steps)}
+                        inCanvas={true}
+                      >
+                        {command.children && command.children.length > 0 && (
+                          <div className="nested-commands">
+                            {renderCommands(command.children)}
+                          </div>
+                        )}
+                      </RepeatBlock>
+                    ) : (
+                      <CommandBlock
+                        id={command.id}
+                        type="if"
+                        inCanvas={true}
+                        condition={command.condition}
+                        onConditionChange={(condition) => {
+                          setCommands((prev) => {
+                            const newCommands = [...prev];
+                            const [cmd, parent] = findCommandById(newCommands, command.id);
+                            if (cmd && parent) {
+                              const index = parent.indexOf(cmd);
+                              parent[index] = { ...cmd, condition };
+                            }
+                            return newCommands;
+                          });
+                        }}
+                      >
+                        {command.children && command.children.length > 0 && (
+                          <div className="nested-commands pl-4 border-l-2 border-black/10">
+                            {renderCommands(command.children)}
+                          </div>
+                        )}
+                      </CommandBlock>
+                    )}
                   </div>
                 ) : (
                   <CommandBlock
@@ -389,6 +425,7 @@ export default function Home() {
                     onSoundChange={(sound) =>
                       handleSoundChange(command.id, sound)
                     }
+                    condition={command.condition}
                   >
                     {command.type === "movement"
                       ? "Forward"
@@ -579,14 +616,32 @@ export default function Home() {
         {/* Control */}
         <div>
           <h2 className="text-sm font-medium text-gray-600 mb-6">Control</h2>
-          <motion.div
-            drag
-            dragSnapToOrigin
-            style={{ zIndex: 50 }}
-            onDragEnd={(event) => handleDragEnd(event, "repeat")}
-          >
-            <RepeatBlock id="repeat" steps={2} onStepsChange={() => {}} />
-          </motion.div>
+          <div className="space-y-4">
+            <motion.div
+              drag
+              dragSnapToOrigin
+              style={{ zIndex: 50 }}
+              onDragEnd={(event) => handleDragEnd(event, "repeat")}
+            >
+              <RepeatBlock id="repeat" steps={2} onStepsChange={() => {}} />
+            </motion.div>
+            
+            <motion.div
+              drag
+              dragSnapToOrigin
+              style={{ zIndex: 50 }}
+              onDragEnd={(event) => handleDragEnd(event, "if")}
+            >
+              <CommandBlock 
+                id="if" 
+                type="if" 
+                condition="path_stopped"
+                command="if"
+              >
+                If
+              </CommandBlock>
+            </motion.div>
+          </div>
         </div>
       </aside>
 
