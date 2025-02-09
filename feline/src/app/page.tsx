@@ -703,7 +703,7 @@ export default function Home() {
                   </svg>
                 )}
               </motion.div>
-              <span>{isExecuting ? "Executing..." : "Start Program"}</span>
+              <span>{isExecuting ? "Executing..." : "Run"}</span>
             </motion.button>
           </div>
           <div className="flex-1 p-4 border-2 border-dashed rounded-lg">
