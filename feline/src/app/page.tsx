@@ -608,35 +608,40 @@ export default function Home() {
 
       {/* Trash Can */}
       <motion.div
-        className={`absolute bottom-4 right-4 p-4 rounded-lg transition-colors 
-          border-2 ${
-          isOverTrash && isDragging ? 'border-red-600 bg-red-200' : 
-          isDragging ? 'border-red-300 bg-red-100' : 
-          'border-gray-300 bg-gray-100'
-        }`}
-        style={{ zIndex: 50 }}
-        animate={{
-          scale: isOverTrash && isDragging ? 1.3 : isDragging ? 1.2 : 1,
-        }}
-        onMouseEnter={() => isDragging && setIsOverTrash(true)}
-        onMouseLeave={() => setIsOverTrash(false)}
-        onMouseUp={() => {
-          if (isOverTrash && draggedId) {
-            handleDelete(draggedId);
-            setDraggedId(null);
-            currentDragId.current = null;
-            setIsOverTrash(false);
-          }
-        }}
-      >
-        <TrashIcon 
-          className={`w-6 h-6 transition-colors ${
-            isOverTrash && isDragging ? 'text-red-600' : 
-            isDragging ? 'text-red-500' : 
-            'text-gray-500'
-          }`} 
-        />
-      </motion.div>
+  className={`absolute bottom-4 right-4 p-4 rounded-lg transition-colors cursor-pointer
+    border-2 ${
+    isOverTrash && isDragging ? 'border-red-600 bg-red-200' : 
+    isDragging ? 'border-red-300 bg-red-100' : 
+    'border-gray-300 hover:border-red-300 hover:bg-red-50 bg-gray-100 group'
+  }`}
+  style={{ zIndex: 50 }}
+  animate={{
+    scale: isOverTrash && isDragging ? 1.3 : isDragging ? 1.2 : 1,
+  }}
+  onMouseEnter={() => isDragging && setIsOverTrash(true)}
+  onMouseLeave={() => setIsOverTrash(false)}
+  onClick={() => {
+    if (!isDragging && commands.length > 0) {
+      setCommands([]);
+    }
+  }}
+  onMouseUp={() => {
+    if (isOverTrash && draggedId) {
+      handleDelete(draggedId);
+      setDraggedId(null);
+      currentDragId.current = null;
+      setIsOverTrash(false);
+    }
+  }}
+>
+  <TrashIcon 
+    className={`w-6 h-6 transition-colors ${
+      isOverTrash && isDragging ? 'text-red-600' : 
+      isDragging ? 'text-red-500' : 
+      'text-gray-500 group-hover:text-red-500'
+    }`} 
+  />
+</motion.div>
     </div>
   );
 }
