@@ -1,80 +1,82 @@
 'use client'
 
 import React, { useEffect, useRef, useState } from "react";
-import mqtt from "mqtt";
+import mqtt, { MqttClient } from "mqtt";
 
 export default function Home() {
   const [connectionStatus, setConnectionStatus] = useState("Disconnected");
   const [speechText, setSpeechText] = useState("");
-  const mqttClientRef = useRef<any>(null);
-  const keyStateRef = useRef({
-    ArrowUp: false,
-    ArrowDown: false,
-    ArrowLeft: false,
-    ArrowRight: false,
-  });
+  const mqttClientRef = useRef<MqttClient | null>(null);
 
-  const sendVelocity = (linear: number, angular: number) => {
+  const publishVelocity = (linear: number, angular: number) => {
     if (!mqttClientRef.current) return;
-    const payload = JSON.stringify({ linear, angular });
-    mqttClientRef.current.publish("robot/velocity", payload);
+    const payload = JSON.stringify({
+      timestamp: Date.now(),
+      linear_velocity_mps: linear,
+      angular_velocity_radps: angular,
+    });
+    mqttClientRef.current.publish("/control/target_velocity", payload);
   };
 
-  const updateVelocity = () => {
-    const { ArrowUp, ArrowDown, ArrowLeft, ArrowRight } = keyStateRef.current;
-    let linear = 0;
-    if (ArrowUp) linear += 0.35;
-    if (ArrowDown) linear -= 0.35;
-    let angular = 0;
-    if (ArrowLeft) angular -= 1.0;
-    if (ArrowRight) angular += 1.0;
-    sendVelocity(linear, angular);
+  const sendVelocity = (linear: number, angular: number) => {
+    publishVelocity(linear, angular);
   };
 
   const sendSpeech = () => {
     if (!mqttClientRef.current) return;
-    mqttClientRef.current.publish("robot/speak", speechText);
+    mqttClientRef.current.publish("`robot/speak`", speechText);
     setSpeechText("");
+  };
+  
+  const handleKeyDown = (event: KeyboardEvent) => {
+    const key = event.key.toLowerCase();
+    switch (key) {
+      case "w":
+        publishVelocity(0.5, 0.0);
+        break;
+      case "s":
+        publishVelocity(-0.5, 0.0);
+        break;
+      case "a":
+        publishVelocity(0.0, 45.0);
+        break;
+      case "d":
+        publishVelocity(0.0, -45.0);
+        break;
+      case "q":
+        publishVelocity(0.0, 0.0);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleKeyUp = (event:KeyboardEvent) => {
+    const key = event.key.toLowerCase();
+    if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) {
+      publishVelocity(0.0, 0.0);
+    }
   };
 
   useEffect(() => {
     const hostname = window.location.hostname;
     const username = hostname.split("-")[0];
-    const mqttHost = username.includes(".") ? hostname : `${username}-desktop.local`;
+    const mqttHost = username.includes(".") ? hostname : `${username}-bracketbot.local`;
 
+    // Correctly formatted WebSocket URL
     const client = mqtt.connect(`ws://${mqttHost}:9001`);
     mqttClientRef.current = client;
 
     client.on("connect", () => {
       setConnectionStatus("Connected");
+      // Subscribe to mapping topics if needed
+      client.subscribe('/mapping/traversability_grid');
+      client.subscribe('/mapping/robot_pose_grid_coords');
     });
 
     client.on("error", (error) => {
       setConnectionStatus(`Connection failed: ${error}`);
     });
-
-    client.on("message", (topic: string, message: Buffer) => {
-      console.log("Message received:", message.toString());
-    });
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (keyStateRef.current.hasOwnProperty(event.key)) {
-        keyStateRef.current[event.key as keyof typeof keyStateRef.current] = true;
-        updateVelocity();
-      } else if (event.key === " ") {
-        Object.keys(keyStateRef.current).forEach(
-          (key) => (keyStateRef.current[key as keyof typeof keyStateRef.current] = false)
-        );
-        sendVelocity(0, 0);
-      }
-    };
-
-    const handleKeyUp = (event: KeyboardEvent) => {
-      if (keyStateRef.current.hasOwnProperty(event.key)) {
-        keyStateRef.current[event.key as keyof typeof keyStateRef.current] = false;
-        updateVelocity();
-      }
-    };
 
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
@@ -82,9 +84,7 @@ export default function Home() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
-      if (client) {
-        client.end();
-      }
+      if (client) client.end();
     };
   }, []);
 
@@ -92,59 +92,79 @@ export default function Home() {
     <div className="min-h-screen p-8 pb-20 flex flex-col items-center justify-center gap-8 font-sans">
       <div className="w-full max-w-2xl text-center">
         <h2 className="text-2xl font-bold mb-6">Robot Controller</h2>
-        
-        <div className={`text-lg font-medium mb-8 ${
-          connectionStatus.startsWith("Connected") ? "text-green-600" : "text-red-600"
-        }`}>
+        <div
+          className={`text-lg font-medium mb-8 ${
+            connectionStatus.startsWith("Connected") ? "text-green-600" : "text-red-600"
+          }`}
+        >
           {connectionStatus}
         </div>
 
+        {/* Control pad – values are adjusted to match the HTML example for at least the forward button */}
         <div className="grid grid-cols-3 gap-4 max-w-[280px] mx-auto mb-8">
           <button
             className="w-20 h-20 bg-gray-100 rounded-lg text-2xl flex items-center justify-center hover:bg-gray-200 active:bg-gray-300 transition-colors touch-manipulation select-none"
             onTouchStart={() => sendVelocity(0.35, -1.0)}
             onTouchEnd={() => sendVelocity(0, 0)}
-          >↖</button>
+          >
+            ↖
+          </button>
           <button
             className="w-20 h-20 bg-gray-100 rounded-lg text-2xl flex items-center justify-center hover:bg-gray-200 active:bg-gray-300 transition-colors touch-manipulation select-none"
-            onTouchStart={() => sendVelocity(0.35, 0)}
+            onTouchStart={() => sendVelocity(0.5, 0)}
             onTouchEnd={() => sendVelocity(0, 0)}
-          >↑</button>
+          >
+            ↑
+          </button>
           <button
             className="w-20 h-20 bg-gray-100 rounded-lg text-2xl flex items-center justify-center hover:bg-gray-200 active:bg-gray-300 transition-colors touch-manipulation select-none"
             onTouchStart={() => sendVelocity(0.35, 1.0)}
             onTouchEnd={() => sendVelocity(0, 0)}
-          >↗</button>
+          >
+            ↗
+          </button>
           <button
             className="w-20 h-20 bg-gray-100 rounded-lg text-2xl flex items-center justify-center hover:bg-gray-200 active:bg-gray-300 transition-colors touch-manipulation select-none"
             onTouchStart={() => sendVelocity(0, -1.0)}
             onTouchEnd={() => sendVelocity(0, 0)}
-          >←</button>
+          >
+            ←
+          </button>
           <button
             className="w-20 h-20 bg-gray-100 rounded-lg text-2xl flex items-center justify-center hover:bg-gray-200 active:bg-gray-300 transition-colors touch-manipulation select-none"
             onTouchStart={() => sendVelocity(0, 0)}
             onTouchEnd={() => sendVelocity(0, 0)}
-          >⊕</button>
+          >
+            Stop
+          </button>
           <button
             className="w-20 h-20 bg-gray-100 rounded-lg text-2xl flex items-center justify-center hover:bg-gray-200 active:bg-gray-300 transition-colors touch-manipulation select-none"
             onTouchStart={() => sendVelocity(0, 1.0)}
             onTouchEnd={() => sendVelocity(0, 0)}
-          >→</button>
+          >
+            →
+          </button>
           <button
             className="w-20 h-20 bg-gray-100 rounded-lg text-2xl flex items-center justify-center hover:bg-gray-200 active:bg-gray-300 transition-colors touch-manipulation select-none"
             onTouchStart={() => sendVelocity(-0.35, -1.0)}
             onTouchEnd={() => sendVelocity(0, 0)}
-          >↙</button>
+          >
+            ↙
+          </button>
           <button
             className="w-20 h-20 bg-gray-100 rounded-lg text-2xl flex items-center justify-center hover:bg-gray-200 active:bg-gray-300 transition-colors touch-manipulation select-none"
             onTouchStart={() => sendVelocity(-0.35, 0)}
             onTouchEnd={() => sendVelocity(0, 0)}
-          >↓</button>
+          >
+            ↓
+          </button>
           <button
             className="w-20 h-20 bg-gray-100 rounded-lg text-2xl flex items-center justify-center hover:bg-gray-200 active:bg-gray-300 transition-colors touch-manipulation select-none"
             onTouchStart={() => sendVelocity(-0.35, 1.0)}
             onTouchEnd={() => sendVelocity(0, 0)}
-          >↘</button>
+          >
+            ↘
+          </button>
         </div>
 
         <div className="flex gap-4 justify-center items-center">
